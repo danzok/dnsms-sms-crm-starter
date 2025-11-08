@@ -1,14 +1,18 @@
 flowchart TD
-  Start[Landing Page]
-  SignUpPage[Sign Up Page]
-  SignInPage[Sign In Page]
-  AuthAPI[Authentication API Endpoint]
-  DashboardPage[Dashboard Page]
-  Start -->|Select Sign Up| SignUpPage
-  Start -->|Select Sign In| SignInPage
-  SignUpPage -->|Submit Credentials| AuthAPI
-  SignInPage -->|Submit Credentials| AuthAPI
-  AuthAPI -->|Success| DashboardPage
-  AuthAPI -->|Error| SignUpPage
-  AuthAPI -->|Error| SignInPage
-  DashboardPage -->|Click Logout| Start
+    A[User visits sign in page] --> B[User signs in]
+    B --> C[Dashboard]
+    C --> D[Customers page]
+    C --> E[Campaigns page]
+    C --> F[Analytics page]
+    D --> G[Add or import customers]
+    G --> H[API route create customers]
+    H --> I[Save customers in database]
+    E --> J[New campaign form]
+    J --> K[API route create campaign]
+    K --> L[Twilio service module sendSms]
+    L --> M[Twilio API]
+    M --> N[Twilio webhook delivers status]
+    N --> O[API route handle webhook]
+    O --> P[Update message status in database]
+    F --> Q[API fetch analytics data]
+    Q --> R[Display analytics charts and tables]
