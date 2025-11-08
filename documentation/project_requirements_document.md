@@ -1,117 +1,185 @@
-# Project Requirements Document: codeguide-starter
-
----
+# Project Requirements Document
 
 ## 1. Project Overview
 
-The **codeguide-starter** project is a boilerplate web application that provides a ready-made foundation for any web project requiring secure user authentication and a post-login dashboard. It sets up the common building blocks—sign-up and sign-in pages, API routes to handle registration and login, and a simple dashboard interface driven by static data. By delivering this skeleton, it accelerates development time and ensures best practices are in place from day one.
+This project is a web-based SMS campaign management platform that helps businesses collect contacts, craft text-message campaigns, schedule or send them immediately, and monitor delivery performance—all from a single dashboard. Administrators can sign up, import customer lists via CSV or manual entry, build multi-step campaigns with message templates, and rely on Twilio’s SMS API to handle outbound texts. Incoming delivery reports are captured via webhooks and displayed in real time so users can track success rates, failures, and trends over time.
 
-This starter kit is being built to solve the friction developers face when setting up repeated common tasks: credential handling, session management, page routing, and theming. Key objectives include: 1) delivering a fully working authentication flow (registration & login), 2) providing a gated dashboard area upon successful login, 3) establishing a clear, maintainable project structure using Next.js and TypeScript, and 4) demonstrating a clean theming approach with global and section-specific CSS. Success is measured by having an end-to-end login journey in under 200 lines of code and zero runtime type errors.
+We’re building this tool to streamline SMS marketing workflows for small and medium-sized teams that currently juggle spreadsheets, manual sends, and disconnected analytics. Key objectives include:
 
----
+*   Secure, role-based access control and session management.
+*   Intuitive customer management (add, bulk import, search/filter).
+*   Guided campaign creation with scheduling options.
+*   Reliable integration with Twilio for sending messages and processing delivery webhooks.
+*   Clear visual analytics showing delivery rates, failure reasons, and time-based trends.
+
+Success is measured by user adoption (number of active campaigns sent monthly), system reliability (≥99% uptime, accurate delivery tracking), and performance (page load under 200 ms, SMS dispatch within seconds of schedule).
 
 ## 2. In-Scope vs. Out-of-Scope
 
 ### In-Scope (Version 1)
-- User registration (sign-up) form with validation
-- User login (sign-in) form with validation
-- Next.js API routes under `/api/auth/route.ts` handling:
-  - Credential validation
-  - Password hashing (e.g., bcrypt)
-  - Session creation or JWT issuance
-- Protected dashboard pages under `/dashboard`:
-  - `layout.tsx` wrapping dashboard content
-  - `page.tsx` rendering static data from `data.json`
-- Global application layout in `/app/layout.tsx`
-- Basic styling via `globals.css` and `dashboard/theme.css`
-- TypeScript strict mode enabled
 
-### Out-of-Scope (Later Phases)
-- Integration with a real database (PostgreSQL, MongoDB, etc.)
-- Advanced authentication flows (password reset, email verification, MFA)
-- Role-based access control (RBAC)
-- Multi-tenant or white-label theming
-- Unit, integration, or end-to-end testing suites
-- CI/CD pipeline and production deployment scripts
+*   User authentication & registration flows via clerk
 
----
+*   Dashboard UI with sidebar navigation
+
+*   Customer management:
+
+    *   Manual contact creation (name + phone + autostate recognition)
+    *   CSV import (bulk upload)
+    *   Search and filter contacts
+
+*   Campaign creation wizard:
+
+    *   Name campaign, compose SMS with simple variables, shortlink features Replace "autostate recognition" with "autostate recognize" to match the user's instruction.
+    *   Select one or more customer lists
+    *   Choose send time (immediate or scheduled)
+    *   Review and confirm
+
+*   Background job processing for scheduled sends
+
+*   Twilio integration for outbound SMS and webhook handling
+
+*   Analytics pages:
+
+    *   Delivery success/failure rates
+    *   Timeline charts
+    *   Date-range and campaign filters
+
+*   Docker Compose setup for local development (Node.js + PostgreSQL)
+
+*   Basic responsive design (desktop + tablet)
+
+### Out-of-Scope (Planned for Later)
+
+*   Advanced message templating (rich variables, A/B testing)
+*   Multi-channel messaging (email, push notifications)
+*   Payment or billing integration
+*   Phone-number validation via third-party API
+*   Multi-user roles beyond basic admin
+*   AI-powered message suggestions
+*   GDPR consent management workflow
+*   High-availability or distributed database clustering
 
 ## 3. User Flow
 
-A new visitor lands on the root URL and sees a welcome page with options to **Sign Up** or **Sign In**. If they choose Sign Up, they fill in their email, password, and hit “Create Account.” The form submits to `/api/auth/route.ts`, which hashes the password, creates a new user session or token, and redirects them to the dashboard. If any input is invalid, an inline error message explains the issue (e.g., “Password too short”).
+A new user visits the landing page and clicks **Sign Up**. They fill in their email, password, and optional profile info. After client-side validation, the data is sent to Better Auth. On successful account creation, they receive a secure session cookie and land on the **Dashboard**. The dashboard features a left-hand sidebar with links to **Customers**, **Campaigns**, and **Analytics**. The header shows the user’s name and a logout button.
 
-Once authenticated, the user is taken to the `/dashboard` route. Here they see a sidebar or header defined by `dashboard/layout.tsx`, and the main panel pulls in static data from `data.json`. They can log out (if that control is present), but otherwise their entire session is managed by server-side cookies or tokens. Returning users go directly to Sign In, submit credentials, and upon success they land back on `/dashboard`. Any unauthorized access to `/dashboard` redirects back to Sign In.
-
----
+To manage contacts, the user selects **Customers**. They can click “Add Customer” to enter a name and phone, or choose “Import CSV” to bulk-upload dozens at once. The table refreshes immediately with new entries and offers search and filter fields. Next, the user goes to **Campaigns > New Campaign**, steps through naming the campaign, writing the SMS body (with optional variables), selecting lists, and scheduling delivery. On **Review & Launch**, clicking “Send” writes the campaign to the database and queues a background job. Once messages dispatch, the user visits **Analytics** to see visual charts for delivery success rates, failure causes, and messages‐sent over time, filtering by date or campaign as needed.
 
 ## 4. Core Features
 
-- **Sign-Up Page (`/app/sign-up/page.tsx`)**: Form fields for email & password, client-side validation, POST to `/api/auth`.
-- **Sign-In Page (`/app/sign-in/page.tsx`)**: Form fields for email & password, client-side validation, POST to `/api/auth`.
-- **Authentication API (`/app/api/auth/route.ts`)**: Handles both registration and login based on HTTP method, integrates password hashing (bcrypt) and session or JWT logic.
-- **Global Layout (`/app/layout.tsx` + `globals.css`)**: Shared header, footer, and CSS resets across all pages.
-- **Dashboard Layout (`/app/dashboard/layout.tsx` + `dashboard/theme.css`)**: Sidebar or top nav for authenticated flows, section-specific styling.
-- **Dashboard Page (`/app/dashboard/page.tsx`)**: Reads `data.json`, renders it as cards or tables.
-- **Static Data Source (`/app/dashboard/data.json`)**: Example dataset to demo dynamic rendering.
-- **TypeScript Configuration**: `tsconfig.json` with strict mode and path aliases (if any).
+*   **Authentication & Authorization**
 
----
+    *   Sign up, sign in, secure session cookies, role-based route protection via Better Auth
+
+*   **Customer Management**
+
+    *   Manual single contact creation
+    *   CSV bulk import (with client-side CSV parsing)
+    *   Server-side persistence (`/api/customers` POST) via Drizzle ORM
+    *   Search and filter in UI table
+
+*   **Campaign Creation Wizard**
+
+    *   Multi-step form (name, message, list selection, schedule)
+    *   Client-side validation and local state persistence
+    *   Final review and launch triggers `/api/campaigns` POST
+    *   Database persistence and background job scheduling
+
+*   **SMS Dispatch & Webhooks**
+
+    *   Background worker reads due campaigns, iterates contacts, calls Twilio SDK (`lib/twilio.ts`)
+    *   Record message SID and “sent” status in `messages` table
+    *   Twilio webhook endpoint (`/api/webhooks/twilio`) updates statuses to delivered/failed
+
+*   **Analytics & Reporting**
+
+    *   Aggregation endpoints (`/api/analytics/delivery-rates`, `/api/analytics/timeline`)
+    *   Charts for success/failure, timeline trends
+    *   Interactive filters (date range, campaign)
+
+*   **Developer Environment**
+
+    *   Docker Compose for Node.js and PostgreSQL
+    *   Environment variable configuration (`.env.example`)
+    *   TypeScript, ESLint, Prettier setup
 
 ## 5. Tech Stack & Tools
 
-- **Framework**: Next.js (App Router) for file-based routing, SSR/SSG, and API routes.
-- **Language**: TypeScript for type safety.
-- **UI Library**: React 18 for component-based UI.
-- **Styling**: Plain CSS via `globals.css` (global reset) and `theme.css` (sectional styling). Can easily migrate to CSS Modules or Tailwind in the future.
-- **Backend**: Node.js runtime provided by Next.js API routes.
-- **Password Hashing**: bcrypt (npm package).
-- **Session/JWT**: NextAuth.js or custom JWT logic (to be decided in implementation).
-- **IDE & Dev Tools**: VS Code with ESLint, Prettier extensions. Optionally, Cursor.ai for AI-assisted coding.
+*   **Frontend**:
 
----
+    *   Next.js (App Router) + React + TypeScript
+    *   shadcn/ui components + Tailwind CSS for styling
+
+*   **Backend**:
+
+    *   Next.js API Routes (Node.js)
+    *   Better Auth for auth flows
+    *   Drizzle ORM + PostgreSQL for data persistence
+
+*   **Messaging**:
+
+    *   Twilio Node.js SDK wrapped in `lib/twilio.ts`
+
+*   **Background Jobs**:
+
+    *   In-process or separate worker triggered by schedule (e.g., `node worker.js`)
+
+*   **Containerization**:
+
+    *   Docker & Docker Compose for dev environment
+
+*   **Dev Tools**:
+
+    *   VS Code, ESLint, Prettier
+    *   Optional: GitHub Codespaces or local Docker setup
 
 ## 6. Non-Functional Requirements
 
-- **Performance**: Initial page load under 200 ms on a standard broadband connection. API responses under 300 ms.
-- **Security**:
-  - HTTPS only in production.
-  - Proper CORS, CSRF protection for API routes.
-  - Secure password storage (bcrypt with salt).
-  - No credentials or secrets checked into version control.
-- **Scalability**: Structure must support adding database integration, caching layers, and advanced auth flows without rewiring core app.
-- **Usability**: Forms should give real-time feedback on invalid input. Layout must be responsive (mobile > 320 px).
-- **Maintainability**: Code must adhere to TypeScript strict mode. Linting & formatting enforced by ESLint/Prettier.
+*   **Performance**:
 
----
+    *   Page load ≤ 200 ms on production CDN
+    *   SMS dispatch processing <1 sec per message
+
+*   **Security**:
+
+    *   HTTPS everywhere, secure cookies, CSRF protection
+    *   Input validation (client + server)
+
+*   **Compliance**:
+
+    *   GDPR readiness (data export/delete hooks)
+    *   Opt-in consent recording for contacts
+
+*   **Usability**:
+
+    *   Responsive layout (desktop + tablet)
+    *   Accessible forms (ARIA labels, keyboard nav)
+
+*   **Scalability**:
+
+    *   Support up to 10,000 contacts per campaign in V1
 
 ## 7. Constraints & Assumptions
 
-- **No Database**: Dashboard uses only `data.json`; real database integration is deferred.
-- **Node Version**: Requires Node.js >= 14.
-- **Next.js Version**: Built on Next.js 13+ App Router.
-- **Authentication**: Assumes availability of bcrypt or NextAuth.js at implementation time.
-- **Hosting**: Targets serverless or Node.js-capable hosting (e.g., Vercel, Netlify).
-- **Browser Support**: Modern evergreen browsers; no IE11 support required.
-
----
+*   **Twilio**: Account SID, Auth Token, and webhook URL must be configured as environment variables.
+*   **Better Auth**: Service availability and API keys required.
+*   **Database**: PostgreSQL v14+ instance accessible via Docker Compose or cloud.
+*   **Time Zones**: Scheduling assumes user’s browser locale; server timestamps in UTC.
+*   **Node.js**: v18+ runtime.
+*   **Email Deliverability**: Out of scope; SMS only.
 
 ## 8. Known Issues & Potential Pitfalls
 
-- **Static Data Limitation**: `data.json` is only for demo. A real API or database will be needed to avoid stale data.
-  *Mitigation*: Define a clear interface for data fetching so swapping to a live endpoint is trivial.
+*   **Twilio Rate Limits**: High‐volume sends could hit Twilio per-second caps.\
+    *Mitigation*: Batch sends or stagger jobs, implement retry backoff.
+*   **CSV Import Errors**: Malformed CSVs may crash parser.\
+    *Mitigation*: Strict client-side validation, show row-level error feedback.
+*   **Webhook Reliability**: Missed webhook events could desync statuses.\
+    *Mitigation*: Periodic fallback polling or rehydration jobs.
+*   **Time Zone Scheduling**: Users in different zones may see confusing times.\
+    *Mitigation*: Clearly display timezone, convert to UTC on save.
+*   **Background Job Failures**: Worker crashes may leave campaigns incomplete.\
+    *Mitigation*: Persist job state in DB, auto-retry on failure.
 
-- **Global CSS Conflicts**: Using global styles can lead to unintended overrides.
-  *Mitigation*: Plan to migrate to CSS Modules or utility-first CSS in Phase 2.
-
-- **API Route Ambiguity**: Single `/api/auth/route.ts` handling both sign-up and sign-in could get complex.
-  *Mitigation*: Clearly branch on HTTP method (`POST /register` vs. `POST /login`) or split into separate files.
-
-- **Lack of Testing**: No test suite means regressions can slip in.
-  *Mitigation*: Build a minimal Jest + React Testing Library setup in an early iteration.
-
-- **Error Handling Gaps**: Client and server must handle edge cases (network failures, malformed input).
-  *Mitigation*: Define a standard error response schema and show user-friendly messages.
-
----
-
-This PRD should serve as the single source of truth for the AI model or any developer generating the next set of technical documents: Tech Stack Doc, Frontend Guidelines, Backend Structure, App Flow, File Structure, and IDE Rules. It contains all functional and non-functional requirements with no ambiguity, enabling seamless downstream development.
+This document fully defines the scope, user journeys, required features, and technical considerations for version 1 of the SMS campaign management platform. All subsequent technical docs can reference these sections unambiguously.
